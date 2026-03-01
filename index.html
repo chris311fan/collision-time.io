@@ -440,6 +440,38 @@
       line-height: 1.7;
     }
 
+    /* ── Legal text ─────────────────────────────────────────── */
+    .legal-section { margin-bottom: 3rem; }
+    .legal-section h3 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin: 2rem 0 0.8rem;
+    }
+    .legal-section h3:first-child { margin-top: 0; }
+    .legal-section p, .legal-section li {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.8;
+      margin-bottom: 0.6rem;
+    }
+    .legal-section ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    .legal-section ul li::before {
+      content: '—';
+      color: var(--brand);
+      margin-right: 0.6rem;
+    }
+    .legal-date {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 1.5rem;
+    }
+
     /* ── Footer ───────────────────────────────────────────────── */
     footer {
       text-align: center;
@@ -485,6 +517,7 @@
       <li><a href="#screenshots">Screenshots</a></li>
       <li><a href="#api">API Usage</a></li>
       <li><a href="#policy">Privacy & Policy</a></li>
+      <li><a href="#legal">Legal</a></li>
     </ul>
   </nav>
 
@@ -747,6 +780,122 @@
         <h3>✅ No Game Interference</h3>
         <p>The bot operates entirely outside the game client. It does not inject code, modify game files, automate gameplay, or interact with the League of Legends client in any way.</p>
       </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Legal: Terms of Service & Privacy Policy -->
+  <section id="legal">
+    <p class="section-label">Legal</p>
+    <h2 class="section-title">Terms of Service &amp; Privacy Policy</h2>
+
+    <div class="legal-section">
+      <h3>Terms of Service</h3>
+      <p class="legal-date">Last updated: March 1, 2026</p>
+
+      <h3>1. Acceptance of Terms</h3>
+      <p>By using Collision Time Bot ("the Bot") in any Discord server, you agree to these Terms of Service. If you do not agree, do not use the Bot. The Bot is operated by the Collision Time team ("we", "us", "our").</p>
+
+      <h3>2. Description of Service</h3>
+      <p>The Bot is a free, non-commercial Discord bot that provides competitive League of Legends scrim management tools, including opponent scouting, draft management, and post-game report generation. The Bot uses the Riot Games API to retrieve publicly available game data.</p>
+
+      <h3>3. Eligibility</h3>
+      <p>You must be at least 13 years of age to use the Bot, in accordance with Discord's Terms of Service. If you are under 18, you confirm that you have parental or guardian consent.</p>
+
+      <h3>4. Acceptable Use</h3>
+      <p>You agree to use the Bot only for its intended purpose of competitive scrim management. You may not:</p>
+      <ul>
+        <li>Use the Bot to harass, stalk, or target other players</li>
+        <li>Attempt to exploit, reverse-engineer, or abuse the Bot's functionality</li>
+        <li>Use scouting data to de-anonymize, dox, or publicly shame other players</li>
+        <li>Use the Bot in any way that violates Riot Games' Terms of Service or Developer Policies</li>
+      </ul>
+
+      <h3>5. Data &amp; Riot Games API</h3>
+      <p>The Bot retrieves data from the Riot Games API on a read-only basis. All game data displayed by the Bot is publicly available through Riot's official API. We do not store, sell, or share any player data. See our Privacy Policy below for full details.</p>
+
+      <h3>6. Availability &amp; Disclaimer</h3>
+      <p>The Bot is provided "as is" with no guarantees of uptime, accuracy, or availability. We may modify, suspend, or discontinue the Bot at any time without notice. We are not responsible for any decisions made based on data provided by the Bot.</p>
+
+      <h3>7. Limitation of Liability</h3>
+      <p>To the fullest extent permitted by law, we shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the Bot.</p>
+
+      <h3>8. Third-Party Services</h3>
+      <p>The Bot integrates with third-party services including Discord, Riot Games API, and Drafter.lol. Your use of these services is governed by their respective terms and policies. We are not responsible for the availability or conduct of third-party services.</p>
+
+      <h3>9. Changes to Terms</h3>
+      <p>We may update these Terms at any time. Continued use of the Bot after changes constitutes acceptance of the updated Terms.</p>
+
+      <h3>10. Contact</h3>
+      <p>For questions or concerns about these Terms, reach out to the Collision Time team via Discord.</p>
+    </div>
+
+    <div class="divider" style="margin: 3rem 0;"></div>
+
+    <div class="legal-section">
+      <h3>Privacy Policy</h3>
+      <p class="legal-date">Last updated: March 1, 2026</p>
+
+      <h3>1. Overview</h3>
+      <p>Collision Time Bot ("the Bot") respects your privacy. This policy explains what data the Bot accesses, how it is used, and how it is protected.</p>
+
+      <h3>2. Data We Access</h3>
+      <p>When you use the Bot's commands, it retrieves the following data from the Riot Games API:</p>
+      <ul>
+        <li>Riot ID (gameName and tagLine) and PUUID</li>
+        <li>Summoner profile information (level, profile icon)</li>
+        <li>Ranked statistics (tier, division, LP, win/loss record)</li>
+        <li>Champion mastery data (top champions, mastery level and points)</li>
+        <li>Recent match history (match details, participant stats)</li>
+        <li>Active game status (for post-game detection only)</li>
+      </ul>
+
+      <h3>3. Data We Store</h3>
+      <p>The Bot stores the following data in server memory (not written to disk or database):</p>
+      <ul>
+        <li>Linked player associations: your Discord user ID mapped to your Riot ID and PUUID, for automatic game detection. This is stored in memory only and resets when the Bot restarts.</li>
+        <li>Server configuration: team name, branding, and channel settings, stored via environment variables.</li>
+      </ul>
+      <p>The Bot does <strong>not</strong> maintain a database. No match history, ranked stats, scouting reports, or personal data is persisted to disk, stored in a database, or retained after display.</p>
+
+      <h3>4. Data We Do Not Collect</h3>
+      <ul>
+        <li>We do not collect or store IP addresses, email addresses, or real names</li>
+        <li>We do not track user behavior or analytics</li>
+        <li>We do not log Discord messages or command history</li>
+        <li>We do not use cookies, tracking pixels, or any tracking technology</li>
+        <li>We do not expose historic Riot IDs or track players across name changes</li>
+      </ul>
+
+      <h3>5. How Data Is Used</h3>
+      <p>All Riot API data is fetched on-demand when a user runs a command, displayed in Discord as embeds or rendered images, and immediately discarded. Data is used solely to:</p>
+      <ul>
+        <li>Generate scouting reports for opponents before scrims</li>
+        <li>Detect game completion for linked players and generate post-game reports</li>
+        <li>Display ranked and mastery information within Discord</li>
+      </ul>
+
+      <h3>6. Data Sharing</h3>
+      <p>We do not sell, trade, rent, or share any player data with third parties. Scouting reports and post-game data are visible only within the Discord server where the command was executed.</p>
+
+      <h3>7. Data Security</h3>
+      <p>The Riot API key is stored securely as an environment variable and never exposed in client-side code, public repositories, or Discord messages. All API communication uses HTTPS.</p>
+
+      <h3>8. Your Rights</h3>
+      <p>Since we do not persist any player data, there is nothing to delete or export. If you wish to unlink your Riot account from the Bot, contact a server administrator. If you do not want your publicly available Riot data displayed in a scouting report, contact us via Discord.</p>
+
+      <h3>9. Riot Games Compliance</h3>
+      <p>The Bot complies with Riot Games' API Terms of Service, Developer Policies, and League of Legends game-specific policies. It accesses only officially documented, publicly available API endpoints and uses data in a read-only, non-commercial capacity.</p>
+
+      <h3>10. Children's Privacy</h3>
+      <p>The Bot is not directed at children under 13. We do not knowingly collect information from children under 13 in compliance with COPPA.</p>
+
+      <h3>11. Changes to This Policy</h3>
+      <p>We may update this Privacy Policy at any time. Continued use of the Bot after changes constitutes acceptance of the updated policy.</p>
+
+      <h3>12. Contact</h3>
+      <p>For privacy-related questions or concerns, reach out to the Collision Time team via Discord.</p>
     </div>
   </section>
 
