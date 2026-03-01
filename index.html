@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collision Time Bot — Competitive League of Legends Scrim Manager</title>
+  <link rel="icon" href="https://i.imgur.com/f5AuDf2.jpeg" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand: #00BAFF;
+      --brand-glow: rgba(0, 186, 255, 0.25);
+      --brand-dark: #0088bb;
+      --bg-deep: #060a10;
+      --bg-card: #0d1117;
+      --bg-card-hover: #131a24;
+      --border: #1a2332;
+      --text: #c9d1d9;
+      --text-bright: #f0f6fc;
+      --text-muted: #6e7a88;
+      --success: #00C9A7;
+      --warning: #FEE75C;
+      --danger: #FF4654;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Noise overlay ─────────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── Hero ──────────────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, var(--brand-glow) 0%, transparent 70%);
+      pointer-events: none;
+      animation: pulse 6s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; transform: translateX(-50%) scale(1); }
+      50% { opacity: 0.7; transform: translateX(-50%) scale(1.1); }
+    }
+
+    .hero-logo {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--brand);
+      box-shadow: 0 0 40px var(--brand-glow), 0 0 80px rgba(0, 186, 255, 0.1);
+      margin-bottom: 2rem;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp 0.8s ease-out;
+    }
+
+    .hero h1 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 700;
+      color: var(--text-bright);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp 0.8s ease-out 0.1s both;
+    }
+
+    .hero h1 span { color: var(--brand); }
+
+    .hero-tagline {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 1rem auto 2.5rem;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp 0.8s ease-out 0.2s both;
+    }
+
+    .hero-badges {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp 0.8s ease-out 0.3s both;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 1rem;
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text);
+    }
+
+    .badge.riot { border-color: #c8aa6e44; color: #c8aa6e; }
+    .badge.discord { border-color: #5865f244; color: #5865f2; }
+    .badge.free { border-color: #00c9a744; color: var(--success); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Navigation ────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(6, 10, 16, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.8rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: transform 0.3s;
+    }
+
+    .nav-brand {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: var(--text-bright);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .nav-brand img { width: 32px; height: 32px; border-radius: 50%; }
+
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--brand); }
+
+    /* ── Sections ──────────────────────────────────────────────── */
+    section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 5rem 2rem;
+    }
+
+    .section-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--brand);
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 1rem;
+    }
+
+    .section-desc {
+      color: var(--text-muted);
+      max-width: 650px;
+      margin-bottom: 3rem;
+      font-size: 1.05rem;
+    }
+
+    /* ── Feature grid ─────────────────────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--brand);
+      transform: translateY(-2px);
+    }
+
+    .feature-icon {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .feature-card h3 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    /* ── User flow ────────────────────────────────────────────── */
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+
+    .flow-steps::before {
+      content: '';
+      position: absolute;
+      left: 24px;
+      top: 48px;
+      bottom: 48px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--brand), var(--brand-dark), transparent);
+    }
+
+    .flow-step {
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+      padding: 1.5rem 0;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 2px solid var(--brand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--brand);
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-content h3 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 0.3rem;
+    }
+
+    .step-content p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .step-command {
+      display: inline-block;
+      font-family: 'Courier New', monospace;
+      background: rgba(0, 186, 255, 0.08);
+      border: 1px solid rgba(0, 186, 255, 0.2);
+      padding: 0.15rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: var(--brand);
+      margin-top: 0.3rem;
+    }
+
+    /* ── Screenshots ──────────────────────────────────────────── */
+    .screenshots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .screenshot-card {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      transition: border-color 0.3s;
+    }
+
+    .screenshot-card:hover { border-color: var(--brand); }
+
+    .screenshot-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .screenshot-placeholder {
+      width: 100%;
+      height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--bg-card) 0%, #111820 100%);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-style: italic;
+    }
+
+    .screenshot-caption {
+      padding: 1rem 1.2rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .screenshot-caption strong { color: var(--text-bright); }
+
+    /* ── API data table ───────────────────────────────────────── */
+    .api-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 2rem 0;
+    }
+
+    .api-table th, .api-table td {
+      text-align: left;
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .api-table th {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--brand);
+      background: var(--bg-card);
+    }
+
+    .api-table td {
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    .api-table tr:hover td { background: var(--bg-card-hover); }
+
+    .api-tag {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      font-family: 'Courier New', monospace;
+    }
+
+    .api-tag.read { background: rgba(0, 201, 167, 0.12); color: var(--success); }
+    .api-tag.static { background: rgba(254, 231, 92, 0.12); color: var(--warning); }
+
+    /* ── Policy section ───────────────────────────────────────── */
+    .policy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .policy-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+    }
+
+    .policy-card h3 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--success);
+      margin-bottom: 0.5rem;
+    }
+
+    .policy-card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      line-height: 1.8;
+    }
+
+    footer a { color: var(--brand); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: var(--border);
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hero-logo { width: 120px; height: 120px; }
+      section { padding: 3rem 1.2rem; }
+      .flow-step { gap: 1.2rem; }
+      .flow-steps::before { left: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <a href="#" class="nav-brand">
+      <img src="https://i.imgur.com/f5AuDf2.jpeg" alt="CT">
+      COLLISION TIME
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#flow">User Flow</a></li>
+      <li><a href="#screenshots">Screenshots</a></li>
+      <li><a href="#api">API Usage</a></li>
+      <li><a href="#policy">Privacy & Policy</a></li>
+    </ul>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero">
+    <img src="https://i.imgur.com/f5AuDf2.jpeg" alt="Collision Time Logo" class="hero-logo">
+    <h1>Collision <span>Time</span></h1>
+    <p class="hero-tagline">
+      A private Discord bot for competitive League of Legends teams — automating draft management, post-game analysis, and opponent scouting for organized scrims.
+    </p>
+    <div class="hero-badges">
+      <span class="badge riot">🎮 Riot API Compliant</span>
+      <span class="badge discord">💬 Discord Bot</span>
+      <span class="badge free">✅ Free &amp; Non-Commercial</span>
+    </div>
+  </header>
+
+  <div class="divider"></div>
+
+  <!-- Features -->
+  <section id="features">
+    <p class="section-label">What It Does</p>
+    <h2 class="section-title">Built for Competitive Teams</h2>
+    <p class="section-desc">
+      Collision Time Bot streamlines the entire scrim night workflow — from scouting opponents before the match, to managing drafts, to generating detailed post-game reports. All from within Discord.
+    </p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🔍</span>
+        <h3>Opponent Scouting</h3>
+        <p>Input summoner names or paste an op.gg multi-search URL. The bot generates detailed player profiles with ranked stats, champion pools, mastery data, playstyle analysis, and exploitable weaknesses — plus a team summary with suggested bans.</p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">⚔️</span>
+        <h3>Draft Management</h3>
+        <p>Create draft series via integration with Drafter.lol. The bot generates shareable draft room links, creates organized threads, polls for completed drafts, and posts pick/ban results with champion images automatically.</p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">📊</span>
+        <h3>Post-Game Reports</h3>
+        <p>Automatically detects when linked players finish a game and generates a detailed post-game scorecard image with KDA, CS, damage, vision, gold, items, objectives, and team comparison — posted directly into the series thread.</p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">🔗</span>
+        <h3>Player Linking</h3>
+        <p>Team members link their Riot accounts to Discord via slash command. The bot resolves PUUIDs and monitors linked players for automatic game detection and post-game report generation.</p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">🏢</span>
+        <h3>Multi-Server Support</h3>
+        <p>The bot supports multiple Discord servers simultaneously, each with independent configuration — team branding, channel mapping, logo, colors, and thread prefixes. Server admins configure via /setup commands.</p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">🧠</span>
+        <h3>Playstyle Intelligence</h3>
+        <p>Analyzes last 10 ranked games per scouted player to identify playstyle tags (Farm Heavy, Team Fighter, Carry Threat, Low Vision), comfort vs. new champion picks, and rank discrepancies between Solo and Flex queues.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- User Flow -->
+  <section id="flow">
+    <p class="section-label">How It Works</p>
+    <h2 class="section-title">Scrim Night User Flow</h2>
+    <p class="section-desc">
+      The typical user journey from scouting an opponent to reviewing post-game results — all within Discord.
+    </p>
+
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h3>Link Player Accounts</h3>
+          <p>Team members link their Riot accounts to enable automatic game detection and post-game reports.</p>
+          <span class="step-command">/link player:Name#TAG region:NA</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h3>Scout the Opponent</h3>
+          <p>Enter summoner names or an op.gg URL. The bot fetches ranked stats, recent match history, champion mastery, and generates individual scouting profiles plus a team summary with ban suggestions.</p>
+          <span class="step-command">/scout players:Name1#TAG, Name2#TAG team:OpponentName</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <h3>Create a Draft Series</h3>
+          <p>Start a Best-of series. The bot creates a draft room, opens a thread in #scrim-results, and posts the link. If a scout thread exists for that opponent, it reuses it.</p>
+          <span class="step-command">/draft opponent:OpponentName games:3 side:blue</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-number">4</div>
+        <div class="step-content">
+          <h3>Draft Results Auto-Posted</h3>
+          <p>The bot polls the draft room for completion and automatically posts each game's pick/ban results with champion splash images into the series thread.</p>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-number">5</div>
+        <div class="step-content">
+          <h3>Post-Game Report Generated</h3>
+          <p>After the in-game match finishes, the bot detects it via the Riot Spectator/Match API and generates a full scorecard image — KDA, CS, damage, vision, gold, items, and objectives — posted in the thread.</p>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-number">6</div>
+        <div class="step-content">
+          <h3>Series Complete</h3>
+          <p>After all games are drafted, the bot posts a series summary with overall results. The thread serves as a permanent archive of the entire scrim: scout report → drafts → post-game results.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Screenshots -->
+  <section id="screenshots">
+    <p class="section-label">In Action</p>
+    <h2 class="section-title">Screenshots</h2>
+    <p class="section-desc">
+      The bot in use during real scrim sessions.
+    </p>
+
+    <div class="screenshots-grid">
+      <div class="screenshot-card">
+        <!-- Replace src with actual screenshot -->
+        <img src="https://i.imgur.com/LIkDcqr.png" alt="Scouting Report">
+        <p class="screenshot-caption"><strong>Scouting Report</strong> — Individual player profiles with ranked stats, playstyle analysis, champion pool, and comfort pick analysis.</p>
+      </div>
+
+      <div class="screenshot-card">
+        <img src="https://i.imgur.com/RX9haEp.png" alt="Team Summary">
+        <p class="screenshot-caption"><strong>Team Summary</strong> — Aggregated team analysis with suggested bans, exploitable weaknesses, pocket pick warnings, and playstyle overview.</p>
+      </div>
+
+      <div class="screenshot-card">
+        <img src="https://i.imgur.com/qltxpL2.png" alt="Draft Results">
+        <p class="screenshot-caption"><strong>Draft Results</strong> — Automatic pick/ban display with champion images posted in the series thread after each game's draft completes.</p>
+      </div>
+
+      <div class="screenshot-card">
+        <img src="https://i.imgur.com/OCKO92l.png" alt="Post-Game Report">
+        <p class="screenshot-caption"><strong>Post-Game Report</strong> — Rendered scorecard with full stats: KDA, CS, damage, vision, gold, items, objectives, and MVP highlight.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- API Usage -->
+  <section id="api">
+    <p class="section-label">Technical Details</p>
+    <h2 class="section-title">Riot API Usage</h2>
+    <p class="section-desc">
+      The bot uses the following Riot Games API endpoints. All data is fetched read-only and used solely for in-Discord display. No data is stored persistently, sold, or shared.
+    </p>
+
+    <table class="api-table">
+      <thead>
+        <tr>
+          <th>Endpoint</th>
+          <th>Purpose</th>
+          <th>Access</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>riot/account/v1</code></td>
+          <td>Resolve Riot ID (gameName#tagLine) to PUUID for API lookups</td>
+          <td><span class="api-tag read">READ</span></td>
+        </tr>
+        <tr>
+          <td><code>lol/summoner/v4</code></td>
+          <td>Fetch summoner level and profile icon for scouting display</td>
+          <td><span class="api-tag read">READ</span></td>
+        </tr>
+        <tr>
+          <td><code>lol/league/v4</code></td>
+          <td>Fetch ranked tier, division, LP, wins, and losses for scouting</td>
+          <td><span class="api-tag read">READ</span></td>
+        </tr>
+        <tr>
+          <td><code>lol/champion-mastery/v4</code></td>
+          <td>Fetch top champion masteries to analyze comfort picks and pool depth</td>
+          <td><span class="api-tag read">READ</span></td>
+        </tr>
+        <tr>
+          <td><code>lol/match/v5</code></td>
+          <td>Fetch recent match IDs and match details for performance analysis and post-game reports</td>
+          <td><span class="api-tag read">READ</span></td>
+        </tr>
+        <tr>
+          <td><code>lol/spectator/v5</code></td>
+          <td>Detect when linked players are currently in-game to trigger post-game monitoring</td>
+          <td><span class="api-tag read">READ</span></td>
+        </tr>
+        <tr>
+          <td><code>Data Dragon</code></td>
+          <td>Champion names, profile icons, champion splash images (static assets)</td>
+          <td><span class="api-tag static">STATIC</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Privacy & Policy -->
+  <section id="policy">
+    <p class="section-label">Compliance</p>
+    <h2 class="section-title">Privacy &amp; Riot Policy Compliance</h2>
+    <p class="section-desc">
+      Collision Time Bot is built with Riot Games' developer policies and player privacy as top priorities.
+    </p>
+
+    <div class="policy-grid">
+      <div class="policy-card">
+        <h3>✅ No Data Storage</h3>
+        <p>Player data is fetched on-demand and displayed in Discord only. No match history, ranked stats, or personal information is stored in any database or persisted to disk.</p>
+      </div>
+
+      <div class="policy-card">
+        <h3>✅ No De-anonymization</h3>
+        <p>The bot does not expose historic Riot IDs, track players across name changes, or reveal any information that isn't already publicly visible on a player's profile.</p>
+      </div>
+
+      <div class="policy-card">
+        <h3>✅ Read-Only Access</h3>
+        <p>All API usage is strictly read-only. The bot never modifies, writes to, or interacts with any game client, player account, or Riot service beyond fetching public data.</p>
+      </div>
+
+      <div class="policy-card">
+        <h3>✅ No Monetization</h3>
+        <p>This is a free, non-commercial tool built for private team use. There is no subscription, no paid tier, no advertising, and no data selling of any kind.</p>
+      </div>
+
+      <div class="policy-card">
+        <h3>✅ Rate Limit Compliance</h3>
+        <p>The bot implements proper rate limiting with request queuing, Retry-After header handling, and exponential backoff. All requests stay well within Riot's published rate limits.</p>
+      </div>
+
+      <div class="policy-card">
+        <h3>✅ No Game Interference</h3>
+        <p>The bot operates entirely outside the game client. It does not inject code, modify game files, automate gameplay, or interact with the League of Legends client in any way.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>
+      <strong>Collision Time Bot</strong> — Competitive League of Legends Scrim Manager
+    </p>
+    <p>
+      Built with <a href="https://discord.js.org/">Discord.js</a> · 
+      Powered by the <a href="https://developer.riotgames.com/">Riot Games API</a> · 
+      Hosted on <a href="https://railway.com/">Railway</a>
+    </p>
+    <p style="margin-top: 1rem; font-size: 0.8rem;">
+      Collision Time Bot isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing League of Legends. League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc.
+    </p>
+  </footer>
+
+</body>
+</html>
